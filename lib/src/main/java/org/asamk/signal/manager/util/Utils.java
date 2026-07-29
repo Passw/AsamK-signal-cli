@@ -17,7 +17,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -32,6 +31,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -39,6 +40,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import kotlin.ResultKt;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlin.coroutines.intrinsics.IntrinsicsKt;
 import okio.ByteString;
 
 public class Utils {
@@ -159,6 +165,67 @@ public class Utils {
 
     public static <T> T handleResponseException(final NetworkResult<T> response) throws IOException {
         return NetworkResultUtil.toBasicLegacy(response);
+    }
+
+    /**
+     * Bridge Kotlin suspend functions for Java callers.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T runSuspendBlocking(final Function<Continuation<? super T>, Object> call) {
+        final var value = new AtomicReference<T>();
+        final var throwable = new AtomicReference<Throwable>();
+        final var done = new CountDownLatch(1);
+
+        final var immediate = call.apply(new Continuation<>() {
+            @Override
+            public CoroutineContext getContext() {
+                return EmptyCoroutineContext.INSTANCE;
+            }
+
+            @Override
+            public void resumeWith(final Object result) {
+                try {
+                    ResultKt.throwOnFailure(result);
+                    value.set((T) result);
+                } catch (Throwable t) {
+                    throwable.set(t);
+                } finally {
+                    done.countDown();
+                }
+            }
+        });
+
+        if (immediate != IntrinsicsKt.getCOROUTINE_SUSPENDED()) {
+            ResultKt.throwOnFailure(immediate);
+            return (T) immediate;
+        }
+
+        try {
+            done.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted while waiting for suspend function", e);
+        }
+
+        final var t = throwable.get();
+        if (t instanceof RuntimeException e) {
+            throw e;
+        }
+        if (t instanceof Error e) {
+            throw e;
+        }
+        if (t != null) {
+            throw new RuntimeException(t);
+        }
+
+        return value.get();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T, E extends BadRequestError> T handleResponseExceptionSuspend(
+            final Function<Continuation<? super RequestResult>, Object> call
+    ) throws IOException {
+        return handleResponseException((RequestResult<T, E>) runSuspendBlocking((Function) call));
     }
 
     @SuppressWarnings("unchecked")

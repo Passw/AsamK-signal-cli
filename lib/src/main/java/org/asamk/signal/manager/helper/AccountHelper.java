@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.whispersystems.signalservice.api.account.ChangePhoneNumberRequest;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.link.LinkedDeviceVerificationCodeResponse;
+import org.whispersystems.signalservice.api.messages.multidevice.DeviceInfo;
 import org.whispersystems.signalservice.api.push.ServiceIdType;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.SignedPreKeyEntity;
@@ -58,6 +59,7 @@ import okio.ByteString;
 
 import static org.asamk.signal.manager.config.ServiceConfig.PREKEY_MAXIMUM_ID;
 import static org.asamk.signal.manager.util.Utils.handleResponseException;
+import static org.asamk.signal.manager.util.Utils.handleResponseExceptionSuspend;
 import static org.whispersystems.signalservice.internal.util.Util.isEmpty;
 
 public class AccountHelper {
@@ -508,8 +510,9 @@ public class AccountHelper {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void deleteUsername() throws IOException {
-        handleResponseException(dependencies.getAccountApi().deleteUsername());
+        handleResponseException(dependencies.getAccountApi().deleteUsernameHash());
         account.setUsernameLink(null);
         account.setUsername(null);
         logger.debug("[deleteUsername] Successfully deleted the username.");
@@ -529,7 +532,8 @@ public class AccountHelper {
     }
 
     public void refreshDeviceName() throws IOException {
-        final var devices = handleResponseException(dependencies.getLinkDeviceApi().getDevices());
+        final List<DeviceInfo> devices = handleResponseExceptionSuspend(cont -> dependencies.getLinkDeviceApi()
+                .getDevices(cont));
         final var deviceId = account.getDeviceId();
         final var device = devices.stream().filter(d -> d.id == deviceId).findFirst();
         if (device.isPresent()) {
@@ -569,8 +573,9 @@ public class AccountHelper {
     }
 
     public void removeLinkedDevices(int deviceId) throws IOException {
-        handleResponseException(dependencies.getLinkDeviceApi().removeDevice(deviceId));
-        var devices = handleResponseException(dependencies.getLinkDeviceApi().getDevices());
+        handleResponseExceptionSuspend(cont -> dependencies.getLinkDeviceApi().removeDevice(deviceId, cont));
+        final List<DeviceInfo> devices = handleResponseExceptionSuspend(cont -> dependencies.getLinkDeviceApi()
+                .getDevices(cont));
         account.setMultiDevice(devices.size() > 1);
     }
 
@@ -605,7 +610,7 @@ public class AccountHelper {
         // When setting an empty GCM id, the Signal-Server also sets the fetchesMessages property to false.
         // If this is the primary device, other users can't send messages to this number anymore.
         // If this is a linked device, other users can still send messages, but this device doesn't receive them anymore.
-        handleResponseException(dependencies.getAccountApi().clearFcmToken());
+        handleResponseExceptionSuspend(cont -> dependencies.getAccountApi().clearFcmToken(cont));
 
         account.setRegistered(false);
         unregisteredListener.call();

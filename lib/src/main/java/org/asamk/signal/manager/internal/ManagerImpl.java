@@ -160,6 +160,7 @@ import okio.Utf8;
 
 import static org.asamk.signal.manager.config.ServiceConfig.MAX_MESSAGE_SIZE_BYTES;
 import static org.asamk.signal.manager.util.Utils.handleResponseException;
+import static org.asamk.signal.manager.util.Utils.handleResponseExceptionSuspend;
 import static org.signal.core.util.StringExtensionsKt.splitByByteLength;
 
 public class ManagerImpl implements Manager {
@@ -483,7 +484,8 @@ public class ManagerImpl implements Manager {
 
     @Override
     public List<Device> getLinkedDevices() throws IOException {
-        var devices = handleResponseException(dependencies.getLinkDeviceApi().getDevices());
+        final List<DeviceInfo> devices = handleResponseExceptionSuspend(cont -> dependencies.getLinkDeviceApi()
+                .getDevices(cont));
         account.setMultiDevice(devices.size() > 1);
         var identityKey = account.getAciIdentityKeyPair().getPrivateKey();
         return devices.stream().map(d -> {
