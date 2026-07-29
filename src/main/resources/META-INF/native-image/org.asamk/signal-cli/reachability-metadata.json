@@ -9709,6 +9709,29 @@
       ]
     },
     {
+      "type": "org.whispersystems.signalservice.internal.storage.protos.StickerPackRecord",
+      "fields": [
+        {
+          "name": "deletedAtTimestamp"
+        },
+        {
+          "name": "packId"
+        },
+        {
+          "name": "packKey"
+        },
+        {
+          "name": "position"
+        }
+      ]
+    },
+    {
+      "type": "org.whispersystems.signalservice.internal.storage.protos.StickerPackRecord$Builder"
+    },
+    {
+      "type": "org.whispersystems.signalservice.internal.storage.protos.StickerPackRecord$Companion"
+    },
+    {
       "type": "org.whispersystems.signalservice.internal.storage.protos.StorageItem",
       "fields": [
         {
