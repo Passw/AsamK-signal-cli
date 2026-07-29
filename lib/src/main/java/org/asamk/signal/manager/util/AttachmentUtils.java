@@ -9,6 +9,7 @@ import org.whispersystems.signalservice.internal.push.http.ResumableUploadSpec;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -63,9 +64,25 @@ public class AttachmentUtils {
             return new ProbedStream(streamDetails.getStream(), 0, 0);
         }
 
-        final var bytes = streamDetails.getStream().readAllBytes();
+        final var stream = streamDetails.getStream();
         var width = 0;
         var height = 0;
+        if (stream instanceof FileInputStream fis) {
+            try {
+                final var image = ImageIO.read(fis);
+                if (image != null) {
+                    width = image.getWidth();
+                    height = image.getHeight();
+                }
+                fis.getChannel().position(0);
+            } catch (IOException e) {
+                logger.debug("Failed to probe image dimensions, sending without width/height: {}", e.getMessage());
+                fis.getChannel().position(0);
+            }
+            return new ProbedStream(fis, width, height);
+        }
+
+        final var bytes = stream.readAllBytes();
         try {
             final var image = ImageIO.read(new ByteArrayInputStream(bytes));
             if (image != null) {

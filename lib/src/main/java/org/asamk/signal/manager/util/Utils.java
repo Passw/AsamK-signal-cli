@@ -53,7 +53,7 @@ public class Utils {
     }
 
     public static StreamDetails createStreamDetailsFromFile(final File file) throws IOException {
-        final InputStream stream = new FileInputStream(file);
+        final var stream = new FileInputStream(file);
         final var size = file.length();
         final var mime = MimeUtils.getFileMimeType(file).orElse(MimeUtils.OCTET_STREAM);
         return new StreamDetails(stream, mime, size);
