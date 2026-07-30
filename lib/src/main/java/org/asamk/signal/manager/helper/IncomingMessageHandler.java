@@ -340,9 +340,9 @@ public final class IncomingMessageHandler {
         }
 
         if (account.getPni().equals(destination.serviceId)) {
-            account.getRecipientStore().markNeedsPniSignature(destination.recipientId, true);
+            account.getRecipientStore().markNeedsPniSignature(sender, true);
         } else if (account.getAci().equals(destination.serviceId)) {
-            account.getRecipientStore().markNeedsPniSignature(destination.recipientId, false);
+            account.getRecipientStore().markNeedsPniSignature(sender, false);
         }
 
         if (content.getReceiptMessage().isPresent()) {
