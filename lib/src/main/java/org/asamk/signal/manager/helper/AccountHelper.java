@@ -17,6 +17,7 @@ import org.asamk.signal.manager.util.Utils;
 import org.signal.core.models.ServiceId.ACI;
 import org.signal.core.models.ServiceId.PNI;
 import org.signal.core.util.Base64;
+import org.signal.core.util.crypto.DeviceNameCipher;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.InvalidKeyException;
 import org.signal.libsignal.protocol.NoSessionException;
@@ -40,7 +41,6 @@ import org.whispersystems.signalservice.api.push.UsernameLinkComponents;
 import org.whispersystems.signalservice.api.push.exceptions.AlreadyVerifiedException;
 import org.whispersystems.signalservice.api.push.exceptions.AuthorizationFailedException;
 import org.whispersystems.signalservice.api.push.exceptions.DeprecatedVersionException;
-import org.whispersystems.signalservice.api.util.DeviceNameUtil;
 import org.whispersystems.signalservice.internal.push.DeviceLimitExceededException;
 import org.whispersystems.signalservice.internal.push.KyberPreKeyEntity;
 import org.whispersystems.signalservice.internal.push.OutgoingPushMessage;
@@ -48,6 +48,7 @@ import org.whispersystems.signalservice.internal.push.SyncMessage;
 import org.whispersystems.signalservice.internal.push.exceptions.MismatchedDevicesException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -519,16 +520,20 @@ public class AccountHelper {
     }
 
     public void setDeviceName(String deviceName) {
-        final var privateKey = account.getAciIdentityKeyPair().getPrivateKey();
-        final var encryptedDeviceName = DeviceNameUtil.encryptDeviceName(deviceName, privateKey);
+        final var encryptedDeviceName = getEncryptedDeviceName(deviceName);
         account.setEncryptedDeviceName(encryptedDeviceName);
     }
 
     public void setDeviceName(int deviceId, String deviceName) throws IOException {
-        final var privateKey = account.getAciIdentityKeyPair().getPrivateKey();
-        final var encryptedDeviceName = DeviceNameUtil.encryptDeviceName(deviceName, privateKey);
+        final var encryptedDeviceName = getEncryptedDeviceName(deviceName);
         handleResponseException(dependencies.getLinkDeviceApi().setDeviceName(encryptedDeviceName, deviceId));
         context.getSyncHelper().sendDeviceNameChange(deviceId);
+    }
+
+    private String getEncryptedDeviceName(final String deviceName) {
+        final var identityKey = account.getAciIdentityKeyPair();
+        return Base64.encodeWithoutPadding(DeviceNameCipher.encryptDeviceName(deviceName.getBytes(StandardCharsets.UTF_8),
+                identityKey));
     }
 
     public void refreshDeviceName() throws IOException {

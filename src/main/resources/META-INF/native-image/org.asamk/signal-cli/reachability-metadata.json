@@ -1163,7 +1163,8 @@
       "type": "java.lang.Integer",
       "allDeclaredFields": true,
       "allDeclaredMethods": true,
-      "allDeclaredConstructors": true
+      "allDeclaredConstructors": true,
+      "jniAccessible": true
     },
     {
       "type": "java.lang.Iterable",
@@ -1198,6 +1199,7 @@
     },
     {
       "type": "java.lang.Object",
+      "jniAccessible": true,
       "methods": [
         {
           "name": "equals",
@@ -6143,14 +6145,38 @@
       ]
     },
     {
+      "type": "org.signal.libsignal.internal.LinkedDeviceInternal",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "fromNative",
+          "parameterTypes": [
+            "java.lang.Object",
+            "java.lang.Object",
+            "java.lang.Object",
+            "java.lang.Object",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
       "type": "org.signal.libsignal.internal.NativeHandleGuard$SimpleOwner",
       "jniAccessible": true,
+      "fields": [
+        {
+          "name": "nativeHandle"
+        }
+      ],
       "methods": [
         {
           "name": "unsafeNativeHandleWithoutGuard",
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "org.signal.libsignal.net.AuthenticatedChatConnection"
     },
     {
       "type": "org.signal.libsignal.net.CdsiLookupResponse",
@@ -8054,6 +8080,31 @@
       ]
     },
     {
+      "type": "org.whispersystems.signalservice.api.account.DeviceAttributes",
+      "methods": [
+        {
+          "name": "getCapabilities",
+          "parameterTypes": []
+        },
+        {
+          "name": "getFetchesMessages",
+          "parameterTypes": []
+        },
+        {
+          "name": "getName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getPniRegistrationId",
+          "parameterTypes": []
+        },
+        {
+          "name": "getRegistrationId",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "org.whispersystems.signalservice.api.groupsv2.CredentialResponse",
       "allDeclaredFields": true,
       "allDeclaredMethods": true,
@@ -8178,6 +8229,26 @@
       "allDeclaredFields": true,
       "allDeclaredMethods": true,
       "allDeclaredConstructors": true
+    },
+    {
+      "type": "org.whispersystems.signalservice.api.messages.multidevice.RegisterAsSecondaryDeviceResponse",
+      "fields": [
+        {
+          "name": "deviceId"
+        },
+        {
+          "name": "pni"
+        },
+        {
+          "name": "uuid"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "org.whispersystems.signalservice.api.profiles.SignalServiceProfile",
@@ -9078,6 +9149,39 @@
       "allDeclaredFields": true,
       "allDeclaredMethods": true,
       "allDeclaredConstructors": true
+    },
+    {
+      "type": "org.whispersystems.signalservice.internal.push.RegisterAsSecondaryDeviceRequest",
+      "methods": [
+        {
+          "name": "getAccountAttributes",
+          "parameterTypes": []
+        },
+        {
+          "name": "getAciPqLastResortPreKey",
+          "parameterTypes": []
+        },
+        {
+          "name": "getAciSignedPreKey",
+          "parameterTypes": []
+        },
+        {
+          "name": "getGcmToken",
+          "parameterTypes": []
+        },
+        {
+          "name": "getPniPqLastResortPreKey",
+          "parameterTypes": []
+        },
+        {
+          "name": "getPniSignedPreKey",
+          "parameterTypes": []
+        },
+        {
+          "name": "getVerificationCode",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "org.whispersystems.signalservice.internal.push.RegistrationSessionMetadataJson",

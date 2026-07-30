@@ -292,7 +292,7 @@ public class SignalAccount implements Closeable {
             final ACI aci,
             final PNI pni,
             final String password,
-            final String encryptedDeviceName,
+            final byte[] encryptedDeviceName,
             final IdentityKeyPair aciIdentity,
             final IdentityKeyPair pniIdentity,
             final ProfileKey profileKey,
@@ -307,7 +307,7 @@ public class SignalAccount implements Closeable {
         getRecipientTrustedResolver().resolveSelfRecipientTrusted(getSelfRecipientAddress());
         this.password = password;
         this.profileKey = profileKey;
-        this.encryptedDeviceName = encryptedDeviceName;
+        this.encryptedDeviceName = org.signal.core.util.Base64.encodeWithoutPadding(encryptedDeviceName);
         this.aciAccountData.setIdentityKeyPair(aciIdentity);
         this.pniAccountData.setIdentityKeyPair(pniIdentity);
         this.registered = false;
