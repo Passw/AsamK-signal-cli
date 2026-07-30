@@ -153,6 +153,10 @@ public class SignalAccount implements Closeable {
     private final KeyValueEntry<Long> lastReceiveTimestamp = new KeyValueEntry<>("last-receive-timestamp",
             long.class,
             0L);
+    private final KeyValueEntry<Long> lastAppliedPniChangeServerTimestamp = new KeyValueEntry<>(
+            "last-applied-pni-change-server-timestamp",
+            long.class,
+            0L);
     private final KeyValueEntry<Boolean> needsToRetryFailedMessages = new KeyValueEntry<>("retry-failed-messages",
             Boolean.class,
             true);
@@ -313,6 +317,7 @@ public class SignalAccount implements Closeable {
         this.registered = false;
         this.isMultiDevice = true;
         setLastReceiveTimestamp(0L);
+        setLastAppliedPniChangeServerTimestamp(0L);
         if (accountEntropyPool != null) {
             this.pinMasterKey = null;
             this.accountEntropyPool = accountEntropyPool;
@@ -368,6 +373,7 @@ public class SignalAccount implements Closeable {
         init();
         this.registrationLockPin = pin;
         setLastReceiveTimestamp(0L);
+        setLastAppliedPniChangeServerTimestamp(0L);
         save();
 
         setPreKeys(ServiceIdType.ACI, aciPreKeys);
@@ -1751,6 +1757,14 @@ public class SignalAccount implements Closeable {
 
     public void setLastReceiveTimestamp(final long value) {
         getKeyValueStore().storeEntry(lastReceiveTimestamp, value);
+    }
+
+    public long getLastAppliedPniChangeServerTimestamp() {
+        return getKeyValueStore().getEntry(lastAppliedPniChangeServerTimestamp);
+    }
+
+    public void setLastAppliedPniChangeServerTimestamp(final long value) {
+        getKeyValueStore().storeEntry(lastAppliedPniChangeServerTimestamp, value);
     }
 
     public void setNeedsToRetryFailedMessages(final boolean value) {

@@ -324,10 +324,14 @@ public class AccountHelper {
             return;
         }
 
-        handlePniChangeNumberMessage(selfChangeNumber, updatePni);
+        handlePniChangeNumberMessage(selfChangeNumber, updatePni, false);
     }
 
-    public void handlePniChangeNumberMessage(final SyncMessage.PniChangeNumber pniChangeNumber, final PNI updatedPni) {
+    public boolean handlePniChangeNumberMessage(
+            final SyncMessage.PniChangeNumber pniChangeNumber,
+            final PNI updatedPni,
+            final boolean forcePniPreKeyRotation
+    ) {
         if (pniChangeNumber.identityKeyPair != null
                 && pniChangeNumber.registrationId != null
                 && pniChangeNumber.signedPreKey != null) {
@@ -341,10 +345,19 @@ public class AccountHelper {
                         pniChangeNumber.lastResortKyberPreKey != null
                                 ? new KyberPreKeyRecord(pniChangeNumber.lastResortKyberPreKey.toByteArray())
                                 : null);
+                if (forcePniPreKeyRotation) {
+                    try {
+                        context.getPreKeyHelper().forceRefreshPreKeys(ServiceIdType.PNI);
+                    } catch (IOException e) {
+                        logger.warn("Failed to force refresh PNI pre keys after PNI change sync", e);
+                    }
+                }
+                return true;
             } catch (Exception e) {
                 logger.warn("Failed to handle change number message", e);
             }
         }
+        return false;
     }
 
     public static final int USERNAME_MIN_LENGTH = 3;
