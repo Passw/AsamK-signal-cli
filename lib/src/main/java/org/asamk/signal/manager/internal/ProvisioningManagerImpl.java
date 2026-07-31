@@ -191,14 +191,18 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
                 : new MediaRootBackupKey(msg.mediaRootBackupKey.toByteArray());
 
         SignalAccount account = null;
+        var cleanUpPartialAccountOnFailure = false;
+        var linkingFinished = false;
         try {
             if (!accountExists) {
                 account = SignalAccount.createLinkedAccount(pathConfig.dataPath(),
                         accountPath,
                         serviceEnvironmentConfig.type(),
                         Settings.DEFAULT);
+                cleanUpPartialAccountOnFailure = true;
             } else {
                 account = SignalAccount.load(pathConfig.dataPath(), accountPath, true, Settings.DEFAULT);
+                cleanUpPartialAccountOnFailure = false;
             }
 
             account.setProvisioningData(number,
@@ -241,6 +245,7 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
             final var deviceId = Integer.parseInt(registerResponse.getDeviceId());
 
             account.finishLinking(deviceId, aciPreKeys, pniPreKeys);
+            linkingFinished = true;
 
             ManagerImpl m = null;
             try {
@@ -277,6 +282,12 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
                     m.close();
                 }
             }
+        } catch (Exception e) {
+            if (!linkingFinished && cleanUpPartialAccountOnFailure && account != null) {
+                cleanupPartialAccount(account, accountPath, e);
+                account = null;
+            }
+            throw e;
         } finally {
             if (account != null) {
                 account.close();
@@ -287,6 +298,28 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
     @Override
     public void close() throws IOException {
         socketHandle.close();
+    }
+
+    private void cleanupPartialAccount(final SignalAccount account, final String accountPath, final Exception cause) {
+        logger.warn("Link attempt failed before registration completed, removing partial account state for {}.",
+                accountPath,
+                cause);
+        try {
+            account.deleteAccountData();
+        } catch (IOException cleanupError) {
+            logger.warn("Failed to delete partial account data for {}: {}",
+                    accountPath,
+                    cleanupError.getMessage(),
+                    cleanupError);
+        }
+        try {
+            accountsStore.removeAccount(accountPath);
+        } catch (RuntimeException cleanupError) {
+            logger.warn("Failed to remove partial account entry for {}: {}",
+                    accountPath,
+                    cleanupError.getMessage(),
+                    cleanupError);
+        }
     }
 
     private boolean canRelinkExistingAccount(final String accountPath) throws IOException {
@@ -302,6 +335,11 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
         }
 
         try (signalAccount) {
+            if (signalAccount.getDeviceId() <= 0) {
+                logger.debug("Account has invalid deviceId {}, allowing relink.",
+                        signalAccount.getDeviceId());
+                return true;
+            }
             if (signalAccount.isPrimaryDevice()) {
                 logger.debug("Account is a primary device.");
                 return false;

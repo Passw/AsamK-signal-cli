@@ -1731,7 +1731,7 @@ public class SignalAccount implements Closeable {
     }
 
     public boolean isRegistered() {
-        return registered;
+        return registered && deviceId > 0;
     }
 
     public void setRegistered(final boolean registered) {
