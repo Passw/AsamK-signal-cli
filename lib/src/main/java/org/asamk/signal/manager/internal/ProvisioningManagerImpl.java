@@ -216,8 +216,8 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
                     accountEntropyPool,
                     mediaRootBackupKey);
 
-            if (Boolean.TRUE.equals(msg.readReceipts)) {
-                account.getConfigurationStore().setReadReceipts(true);
+            if (msg.readReceipts != null) {
+                account.getConfigurationStore().setReadReceipts(msg.readReceipts);
             }
 
             final var aciPreKeys = generatePreKeysForType(account.getAccountData(ServiceIdType.ACI));
