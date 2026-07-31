@@ -33,7 +33,7 @@ import java.util.UUID;
 public class AccountDatabase extends Database {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountDatabase.class);
-    private static final long DATABASE_VERSION = 29;
+    private static final long DATABASE_VERSION = 30;
 
     private AccountDatabase(final HikariDataSource dataSource) {
         super(logger, DATABASE_VERSION, dataSource);
@@ -632,6 +632,14 @@ public class AccountDatabase extends Database {
                                         ALTER TABLE sticker ADD COLUMN storage_id BLOB;
                                         ALTER TABLE sticker ADD COLUMN storage_record BLOB;
                                         CREATE UNIQUE INDEX sticker_storage_id_index ON sticker (storage_id);
+                                        """);
+            }
+        }
+        if (oldVersion < 30) {
+            logger.debug("Updating database: Create pni_signature_verified column");
+            try (final var statement = connection.createStatement()) {
+                statement.executeUpdate("""
+                                        ALTER TABLE recipient ADD pni_signature_verified INTEGER NOT NULL DEFAULT FALSE;
                                         """);
             }
         }

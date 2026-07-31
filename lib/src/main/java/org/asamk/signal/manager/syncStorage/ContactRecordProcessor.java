@@ -357,6 +357,7 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
                 logger.warn("Received invalid contact identity key from storage");
             }
         }
+        account.getRecipientStore().storePniSignatureVerified(connection, recipientId, contactProto.pniSignatureVerified);
         account.getRecipientStore()
                 .storeStorageRecord(connection, recipientId, contactRecord.getId(), contactProto.encode());
     }

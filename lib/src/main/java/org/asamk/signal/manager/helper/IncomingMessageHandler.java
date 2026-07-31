@@ -498,10 +498,11 @@ public final class IncomingMessageHandler {
         }
 
         logger.debug("Verified association of ACI {} with PNI {}", aci, pni);
-        account.getRecipientTrustedResolver()
+        final var recipientId = account.getRecipientTrustedResolver()
                 .resolveRecipientTrusted(Optional.of(ACI.from(aci.getRawUuid())),
                         Optional.of(pni),
                         senderAddress.getNumber());
+        account.getRecipientStore().markPniSignatureVerified(recipientId);
         return true;
     }
 
