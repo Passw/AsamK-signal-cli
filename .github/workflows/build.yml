@@ -31,25 +31,6 @@ jobs:
           name: signal-cli-archive-${{ matrix.java }}
           path: dist/*
 
-  submit-dependency-graph:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'zulu'
-          java-version: '25'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          dependency-graph: generate-and-submit
-      - name: Generate dependency graph
-        run: ./gradlew --no-daemon dependencies
-
   build-client:
     strategy:
       matrix:
