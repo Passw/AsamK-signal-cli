@@ -31,8 +31,7 @@ public class StickerPackRecordProcessor extends DefaultStorageRecordProcessor<Si
     @Override
     protected boolean isInvalid(final SignalStickerPackRecord remote) {
         return remote.getProto().packId.size() != PACK_ID_LENGTH || (
-                remote.getProto().deletedAtTimestamp == 0
-                        && remote.getProto().packKey.size() != PACK_KEY_LENGTH
+                remote.getProto().deletedAtTimestamp == 0 && remote.getProto().packKey.size() != PACK_KEY_LENGTH
         );
     }
 

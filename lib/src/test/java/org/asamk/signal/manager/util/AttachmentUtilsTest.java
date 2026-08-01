@@ -3,11 +3,12 @@ package org.asamk.signal.manager.util;
 import org.junit.jupiter.api.Test;
 import org.whispersystems.signalservice.api.util.StreamDetails;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
+
+import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +18,9 @@ class AttachmentUtilsTest {
     @Test
     public void createAttachmentStream_setsWidthAndHeightForImage() throws Exception {
         final var imageBytes = pngBytes(37, 21);
-        final var streamDetails = new StreamDetails(new ByteArrayInputStream(imageBytes), "image/png", imageBytes.length);
+        final var streamDetails = new StreamDetails(new ByteArrayInputStream(imageBytes),
+                "image/png",
+                imageBytes.length);
 
         final var attachment = AttachmentUtils.createAttachmentStream(streamDetails, Optional.of("meme.png"), null);
 
@@ -29,7 +32,9 @@ class AttachmentUtilsTest {
     @Test
     public void createAttachmentStream_leavesWidthAndHeightZeroForNonImage() throws Exception {
         final var bytes = "not an image".getBytes();
-        final var streamDetails = new StreamDetails(new ByteArrayInputStream(bytes), "application/octet-stream", bytes.length);
+        final var streamDetails = new StreamDetails(new ByteArrayInputStream(bytes),
+                "application/octet-stream",
+                bytes.length);
 
         final var attachment = AttachmentUtils.createAttachmentStream(streamDetails, Optional.of("file.bin"), null);
 

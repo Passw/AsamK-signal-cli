@@ -7,13 +7,14 @@ import org.whispersystems.signalservice.api.push.exceptions.ResumeLocationInvali
 import org.whispersystems.signalservice.api.util.StreamDetails;
 import org.whispersystems.signalservice.internal.push.http.ResumableUploadSpec;
 
-import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
 
 public class AttachmentUtils {
 
@@ -60,7 +61,10 @@ public class AttachmentUtils {
     private static ProbedStream probeImageDimensions(StreamDetails streamDetails) throws IOException {
         final var contentType = streamDetails.getContentType();
         final var length = streamDetails.getLength();
-        if (contentType == null || !contentType.startsWith("image/") || length <= 0 || length > MAX_DIMENSION_PROBE_SIZE) {
+        if (contentType == null
+                || !contentType.startsWith("image/")
+                || length <= 0
+                || length > MAX_DIMENSION_PROBE_SIZE) {
             return new ProbedStream(streamDetails.getStream(), 0, 0);
         }
 

@@ -336,8 +336,7 @@ public class ProvisioningManagerImpl implements ProvisioningManager, Closeable {
 
         try (signalAccount) {
             if (signalAccount.getDeviceId() <= 0) {
-                logger.debug("Account has invalid deviceId {}, allowing relink.",
-                        signalAccount.getDeviceId());
+                logger.debug("Account has invalid deviceId {}, allowing relink.", signalAccount.getDeviceId());
                 return true;
             }
             if (signalAccount.isPrimaryDevice()) {
