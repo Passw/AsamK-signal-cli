@@ -1706,8 +1706,15 @@ public class ManagerImpl implements Manager {
         }
 
         final var contact = account.getContactStore().getContact(recipientId);
-        if (contact != null && !Util.isEmpty(contact.getName())) {
-            return contact.getName();
+        if (contact != null) {
+            final var nickname = contact.getDisplayNickname();
+            if (!Util.isEmpty(nickname)) {
+                return nickname;
+            }
+
+            if (!Util.isEmpty(contact.getName())) {
+                return contact.getName();
+            }
         }
 
         final var profile = context.getProfileHelper().getRecipientProfile(recipientId);
