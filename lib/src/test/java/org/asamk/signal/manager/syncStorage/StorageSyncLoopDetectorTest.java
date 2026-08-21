@@ -91,7 +91,7 @@ class StorageSyncLoopDetectorTest {
     }
 
     private static WriteOperationResult writeWithInsert(final int storageIdByte) {
-        final var storageId = new StorageId(99, new byte[]{(byte) storageIdByte});
+        final var storageId = StorageId.forType(new byte[]{(byte) storageIdByte}, 99);
         final var record = new SignalStorageRecord(storageId, new StorageRecord.Builder().build());
         return new WriteOperationResult(null, List.of(record), List.of());
     }

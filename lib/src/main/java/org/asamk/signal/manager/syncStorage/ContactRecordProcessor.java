@@ -205,6 +205,7 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
                 .identityState(identityState)
                 .identityKey(identityKey)
                 .blocked(remote.blocked)
+                .blockedAtTimestamp(remote.blockedAtTimestamp)
                 .whitelisted(remote.whitelisted)
                 .archived(remote.archived)
                 .markedUnread(remote.markedUnread)
@@ -283,7 +284,9 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
         final var contactNickGivenName = contact == null ? null : contact.nickNameGivenName();
         final var contactNickFamilyName = contact == null ? null : contact.nickNameFamilyName();
         final var contactNote = contact == null ? null : contact.note();
+        final var blockedAt = contact == null ? 0 : contact.blockedAt();
         if (blocked != contactProto.blocked
+                || blockedAt != contactProto.blockedAtTimestamp
                 || profileShared != contactProto.whitelisted
                 || archived != contactProto.archived
                 || hidden != contactProto.hidden
@@ -301,6 +304,7 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
             logger.debug("Storing new or updated contact {}", recipientId);
             final var contactBuilder = contact == null ? Contact.newBuilder() : Contact.newBuilder(contact);
             final var newContact = contactBuilder.withIsBlocked(contactProto.blocked)
+                    .withBlockedAt(contactProto.blocked ? contactProto.blockedAtTimestamp : 0)
                     .withIsProfileSharingEnabled(contactProto.whitelisted)
                     .withIsArchived(contactProto.archived)
                     .withIsHidden(contactProto.hidden)
