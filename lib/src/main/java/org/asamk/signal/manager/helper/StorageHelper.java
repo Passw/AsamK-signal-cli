@@ -452,7 +452,7 @@ public class StorageHelper {
             final var stickerPacks = account.getStickerStore()
                     .getStickerPacks(connection)
                     .stream()
-                    .filter(pack -> pack.isInstalled() || pack.deletedTimestamp() > 0)
+                    .filter(pack -> pack.storageId() != null)
                     .toList();
             newStickerPackStorageIds = generateStickerPackStorageIds(stickerPacks);
             for (final var stickerPack : stickerPacks) {
@@ -715,6 +715,13 @@ public class StorageHelper {
         final var groupV2RecordProcessor = new GroupV2RecordProcessor(account, connection);
         final var contactRecordProcessor = new ContactRecordProcessor(account, connection, context.getJobExecutor());
         final var stickerPackRecordProcessor = new StickerPackRecordProcessor(account, connection);
+
+        final var contactRecords = records.stream()
+                .filter(record -> record.getProto().contact != null)
+                .map(record -> StorageRecordConvertersKt.toSignalContactRecord(record.getProto().contact,
+                        record.getId()))
+                .toList();
+        contactRecordProcessor.prepare(contactRecords);
 
         for (final var record : records) {
             if (record.getProto().account != null) {

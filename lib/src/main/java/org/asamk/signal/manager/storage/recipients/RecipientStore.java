@@ -923,9 +923,32 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
             statement.executeUpdate();
         }
         if (contact != null && contact.unregisteredTimestamp() != null) {
-            markUnregisteredAndSplitIfNecessary(connection, recipientId);
+            markUnregisteredAndSplitIfNecessary(connection, recipientId, contact.unregisteredTimestamp());
         }
         rotateStorageId(connection, recipientId);
+    }
+
+    public void splitForStorageSyncIfNecessary(final Connection connection, final ACI aci) throws SQLException {
+        final var recipient = findByServiceId(connection, aci);
+        if (recipient.isEmpty()) {
+            return;
+        }
+
+        final var recipientId = recipient.get().id();
+        final var address = recipient.get().address();
+        if (address.pni().isEmpty() && address.number().isEmpty()) {
+            return;
+        }
+
+        logger.debug("Splitting {} for storage sync", recipientId);
+        final var splitAddress = new RecipientAddress(Optional.empty(),
+                address.pni(),
+                address.number(),
+                Optional.empty());
+        updateRecipientAddress(connection,
+                recipientId,
+                new RecipientAddress(address.aci(), Optional.empty(), Optional.empty(), address.username()));
+        resolveRecipientTrusted(connection, splitAddress);
     }
 
     public int removeStorageIdsFromLocalOnlyUnregisteredRecipients(
@@ -1063,7 +1086,7 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
                     if (recipientAddress.get().address().aci().isEmpty() || (
                             contact != null && contact.unregisteredTimestamp() != null
                     )) {
-                        markUnregisteredAndSplitIfNecessary(connection, recipientId);
+                        markUnregisteredAndSplitIfNecessary(connection, recipientId, System.currentTimeMillis());
                     }
                 }
             }
@@ -1097,7 +1120,7 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
             if (registered) {
                 markRegistered(connection, recipientId);
             } else {
-                markUnregisteredAndSplitIfNecessary(connection, recipientId);
+                markUnregisteredAndSplitIfNecessary(connection, recipientId, System.currentTimeMillis());
             }
             connection.commit();
         } catch (SQLException e) {
@@ -1107,9 +1130,10 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
 
     private void markUnregisteredAndSplitIfNecessary(
             final Connection connection,
-            final RecipientId recipientId
+            final RecipientId recipientId,
+            final long unregisteredTimestamp
     ) throws SQLException {
-        markUnregistered(connection, recipientId);
+        markUnregistered(connection, recipientId, unregisteredTimestamp);
         final var address = resolveRecipientAddress(connection, recipientId);
         final var needSplit = address.aci().isPresent() && address.pni().isPresent();
         logger.trace("Marking unregistered recipient {} as unregistered (and split={}): {}",
@@ -1156,7 +1180,11 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
         }
     }
 
-    private void markUnregistered(final Connection connection, final RecipientId recipientId) throws SQLException {
+    private void markUnregistered(
+            final Connection connection,
+            final RecipientId recipientId,
+            final long unregisteredTimestamp
+    ) throws SQLException {
         final var sql = (
                 """
                 UPDATE %s
@@ -1165,7 +1193,7 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
                 """
         ).formatted(TABLE_RECIPIENT);
         try (final var statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, System.currentTimeMillis());
+            statement.setLong(1, unregisteredTimestamp);
             statement.setLong(2, recipientId.id());
             statement.executeUpdate();
         }

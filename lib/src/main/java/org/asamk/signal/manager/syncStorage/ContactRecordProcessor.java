@@ -24,6 +24,7 @@ import org.whispersystems.signalservice.internal.storage.protos.ContactRecord.Id
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -54,6 +55,29 @@ public class ContactRecordProcessor extends DefaultStorageRecordProcessor<Signal
         this.selfAci = account.getAci();
         this.selfPni = account.getPni();
         this.selfNumber = account.getNumber();
+    }
+
+    public void prepare(final Collection<SignalContactRecord> remoteRecords) throws SQLException {
+        for (final var remoteRecord : remoteRecords) {
+            if (isInvalid(remoteRecord)) {
+                continue;
+            }
+            final var remote = remoteRecord.getProto();
+            final var aci = ACI.parseOrNull(remote.aci, remote.aciBinary);
+            final var pni = PNI.parseOrNull(remote.pni, remote.pniBinary);
+            if (shouldSplitForStorageSync(remote.unregisteredAtTimestamp, aci, pni, remote.e164)) {
+                account.getRecipientStore().splitForStorageSyncIfNecessary(connection, aci);
+            }
+        }
+    }
+
+    static boolean shouldSplitForStorageSync(
+            final long unregisteredAtTimestamp,
+            final ACI aci,
+            final PNI pni,
+            final String e164
+    ) {
+        return unregisteredAtTimestamp > 0 && aci != null && pni == null && e164.isEmpty();
     }
 
     /**
