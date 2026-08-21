@@ -1490,9 +1490,14 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
             RecipientId toBeMergedRecipientId
     ) throws SQLException {
         final var contact = getContact(connection, recipientId);
+        final var toBeMergedContact = getContact(connection, toBeMergedRecipientId);
         if (contact == null) {
-            final var toBeMergedContact = getContact(connection, toBeMergedRecipientId);
             storeContact(connection, recipientId, toBeMergedContact);
+        } else if (toBeMergedContact != null) {
+            final var mergedContact = mergeContacts(contact, toBeMergedContact);
+            if (!contact.equals(mergedContact)) {
+                storeContact(connection, recipientId, mergedContact);
+            }
         }
 
         final var profileKey = getProfileKey(connection, recipientId);
@@ -1515,6 +1520,24 @@ public class RecipientStore implements RecipientIdCreator, RecipientResolver, Re
         }
 
         recipientsMerged.put(toBeMergedRecipientId.id(), recipientId.id());
+    }
+
+    static Contact mergeContacts(final Contact primary, final Contact secondary) {
+        final var profileSharingEnabled = primary.isProfileSharingEnabled() || secondary.isProfileSharingEnabled();
+        return Contact.newBuilder(primary)
+                .withGivenName(secondary.givenName())
+                .withFamilyName(secondary.familyName())
+                .withMessageExpirationTime(primary.messageExpirationTime() > 0
+                        ? primary.messageExpirationTime()
+                        : secondary.messageExpirationTime())
+                .withMessageExpirationTimeVersion(Math.max(primary.messageExpirationTimeVersion(),
+                        secondary.messageExpirationTimeVersion()))
+                .withMuteUntil(primary.muteUntil() > 0 ? primary.muteUntil() : secondary.muteUntil())
+                .withIsBlocked(primary.isBlocked() || secondary.isBlocked())
+                .withBlockedAt(Math.max(primary.blockedAt(), secondary.blockedAt()))
+                .withIsProfileSharingEnabled(profileSharingEnabled)
+                .withIsHidden(profileSharingEnabled ? false : primary.isHidden())
+                .build();
     }
 
     private Optional<RecipientWithAddress> findByNumber(
